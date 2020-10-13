@@ -1,12 +1,12 @@
-package com.vrush.microservices.booking.dtos;
+package com.vrush.microservices.financial.dtos;
+
+import java.io.Serializable;
+import java.util.UUID;
 
 import com.vrush.microservices.booking.enums.BookingStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor

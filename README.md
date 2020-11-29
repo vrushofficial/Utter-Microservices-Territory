@@ -17,6 +17,10 @@ This microservices based project demonstrates how multiple services run independ
 - Independently deployable - enables a team to deploy their service without having to coordinate with other teams
 - Capable of being developed by a small team - essential for high productivity by avoiding the high communication
 
+## System Architecture
+
+![BookingSystemArchitecture.png](BookingSystemArchitecture.png)
+
 
 ## Technology Stack Used
 - **RabbitMQ** as a Message Broker
@@ -29,7 +33,12 @@ This microservices based project demonstrates how multiple services run independ
 - **Postgres** as Database
 - **Splunk** as Log Analysis Platform
 - **Swagger** to create an API documentation
+- **DeadHeat Lock** as a locking mechanism to avoid concurrency issues
 
+## DeadHeat Lock
+Here DeadHeat Lock library is being used which I created before. You can look into that using - [DeadHeat Lock](https://github.com/vrushofficial/deadheat-lock).
+
+Locking mechanism as a usecase in Booking service on save booking to ensure that user not allow for booking with same RoomId(which can be called from any instance of booking service simultaneously).
 
 ## Starting services locally without Docker
 
@@ -56,6 +65,7 @@ I used a thymeleaf template from [Frontend Template - Delux by Colorlib](https:/
 | Splunk | 8000 |
 | Netflix Eureka | 8761 |
 | Zipkin | 9411 |
+| DeadHeat Lock | 6379 |
 
 
 # That's all. Leave a star if it helped you!

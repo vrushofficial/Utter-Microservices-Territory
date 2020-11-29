@@ -1,5 +1,6 @@
 package com.vrush.microservices.booking.service;
 
+import com.vrush.deadhead.lock.redis.annotation.RedisDeadHeatSingleLock;
 import com.vrush.microservices.booking.annotations.TrackMethod;
 import com.vrush.microservices.booking.dtos.BookingPayloadDTO;
 import com.vrush.microservices.booking.dtos.BookingPostDTO;
@@ -40,6 +41,7 @@ public class BookingService {
     private final EventBookingCreatedPublisher eventBookingCreatedPublisher;
 
     @TrackMethod
+    @RedisDeadHeatSingleLock
     public Booking save(@NonNull final BookingPostDTO bookingDTO, @NonNull final String key) {
         Booking newBooking = mapper.toEntity(bookingDTO);
         Room room = getRoom(bookingDTO);

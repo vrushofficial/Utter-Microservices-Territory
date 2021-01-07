@@ -1,0 +1,22 @@
+version: "3.6"
+
+networks:
+  rabbitmq-prometheus:
+
+volumes:
+  log_volume:
+
+services:
+  consumer:
+    container_name: consumer
+    build:
+      context: ./consumer-service
+      dockerfile: Dockerfile
+    ports:
+      - "8400:8400"
+    environment:
+      - "LOGGING_FILE=/logs/consumer-application.log"
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - log_volume:/logs

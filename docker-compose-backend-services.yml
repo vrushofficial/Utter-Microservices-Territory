@@ -1,0 +1,80 @@
+version: "3.6"
+
+networks:
+  rabbitmq-prometheus:
+
+volumes:
+  log_volume:
+
+services:
+  booking-one: &booking
+    container_name: booking-one
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    ports:
+      - "8100:8100"
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
+    environment:
+    # - "SPRING_PROFILES_ACTIVE=prod"
+      - "LOGGING_FILE=/logs/booking-1-application.log"
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - log_volume:/logs
+  booking-two:
+    <<: *booking
+    container_name: booking-two
+    ports:
+      - "8101:8100"
+    environment:
+      - "LOGGING_FILE=/logs/booking-2-application.log"
+  booking-three:
+    <<: *booking
+    container_name: booking-three
+    ports:
+      - "8102:8100"
+    environment:
+      - "LOGGING_FILE=/logs/booking-3-application.log"
+  searching-one: &searching
+    container_name: searching
+    build:
+      context: ./searching-service
+      dockerfile: Dockerfile
+    ports:
+      - "8200:8200"
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
+    environment:
+      - "SPRING_PROFILES_ACTIVE=prod"
+      - "LOGGING_FILE=/logs/searching-application.log"
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - log_volume:/logs
+  searching-two:
+    <<: *searching
+    container_name: searching-two
+    ports:
+      - "8201:8200"
+    environment:
+      - "LOGGING_FILE=/logs/searching-2-application.log"
+  financial:
+    container_name: financial
+    build:
+      context: ./financial-service
+      dockerfile: Dockerfile
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
+    ports:
+      - "8300:8300"
+    environment:
+      - "LOGGING_FILE=/logs/financial-application.log"
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - log_volume:/logs

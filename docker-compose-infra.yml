@@ -1,0 +1,195 @@
+# https://docs.docker.com/compose/compose-file/
+version: "3.6"
+
+# https://docs.docker.com/compose/compose-file/#networks
+networks:
+  rabbitmq-prometheus:
+
+# https://docs.docker.com/compose/compose-file/#volumes
+volumes:
+  rabbitmq-prometheus_prometheus:
+  rabbitmq-prometheus_grafana:
+  log_volume:
+  postgresql_master_data:
+    driver: local
+  postgresql_financial_data:
+    driver: local
+
+services:
+  grafana:
+    # https://hub.docker.com/r/grafana/grafana/tags
+    image: grafana/grafana:6.4.3
+    ports:
+      - "3000:3000"
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - rabbitmq-prometheus_grafana:/var/lib/grafana
+      - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/rabbitmq.yaml
+      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/prometheus.yaml
+      - ./grafana/dashboards:/dashboards
+    environment:
+      # https://grafana.com/plugins/flant-statusmap-panel
+      # https://grafana.com/plugins/grafana-piechart-panel
+      # https://grafana.com/plugins/grafana-polystat-panel
+      # https://grafana.com/plugins/jdbranham-diagram-panel
+      # https://grafana.com/plugins/michaeldmoore-multistat-panel
+      # https://grafana.com/plugins/vonage-status-panel
+      # https://grafana.com/plugins/yesoreyeram-boomtable-panel
+      - "GF_INSTALL_PLUGINS=flant-statusmap-panel,grafana-piechart-panel"
+      - "GF_SECURITY_ADMIN_USER=admin"
+      - "GF_SECURITY_ADMIN_PASSWORD=admin"
+  prometheus:
+    # https://hub.docker.com/r/prom/prometheus/tags
+    image: prom/prometheus:v2.13.1
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - "9090:9090"
+    volumes:
+      - rabbitmq-prometheus_prometheus:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  node-exporter:
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    # https://hub.docker.com/r/prom/node-exporter/tags
+    image: prom/node-exporter:v0.18.1
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+  cadvisor:
+    expose:
+      - 8080
+    # https://hub.docker.com/r/google/cadvisor/tags
+    image: google/cadvisor:v0.33.0
+    networks:
+      - "rabbitmq-prometheus"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+  postgresql-master:
+    #https://github.com/bitnami/bitnami-docker-postgresql
+    image: 'bitnami/postgresql:12'
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgresql_master_data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=readonly
+      - POSTGRESQL_REPLICATION_PASSWORD=readonly
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=root
+      - POSTGRESQL_DATABASE=booking
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql-readonly:
+    image: 'bitnami/postgresql:12'
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - '5433:5432'
+    depends_on:
+      - postgresql-master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=readonly
+      - POSTGRESQL_REPLICATION_PASSWORD=readonly
+      - POSTGRESQL_MASTER_HOST=postgresql-master
+      - POSTGRESQL_PASSWORD=admin123
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql-financial:
+    #https://github.com/bitnami/bitnami-docker-postgresql
+    image: 'bitnami/postgresql:12'
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - '5434:5432'
+    volumes:
+      - 'postgresql_financial_data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=root
+      - POSTGRESQL_DATABASE=financial
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql-master-exporter:
+    image: wrouesnel/postgres_exporter:v0.8.0
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - 9187:9187
+    environment:
+      - DATA_SOURCE_NAME=postgresql://admin:admin123@postgresql-master:5432/booking?sslmode=disable
+    depends_on:
+      - postgresql-readonly
+  postgresql-slave-exporter:
+    image: wrouesnel/postgres_exporter:v0.8.0
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - 9188:9187
+    environment:
+      - DATA_SOURCE_NAME=postgresql://readonly:readonly@postgresql-readonly:5432/booking?sslmode=disable
+    depends_on:
+      - postgresql-readonly
+  postgresql-financial-exporter:
+    image: wrouesnel/postgres_exporter:v0.8.0
+    networks:
+      - "rabbitmq-prometheus"
+    ports:
+      - 9189:9187
+    environment:
+      - DATA_SOURCE_NAME=postgresql://admin:admin123@postgresql-financial:5432/financial?sslmode=disable
+    depends_on:
+      - postgresql-financial
+  redis:
+    image: redis:5
+    hostname: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - "rabbitmq-prometheus"
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.3.4
+    ports:
+      - 9121:9121
+    networks:
+      - "rabbitmq-prometheus"
+    command:
+      - "--redis.addr=redis://redis:6379"
+  splunk:
+    image: splunk/splunk:7.3.0
+    hostname: splunk
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_USER=root
+      - SPLUNK_ENABLE_LISTEN=9997
+      - SPLUNK_PASSWORD=password
+    ports:
+      - "8000:8000"
+  splunkforwarder:
+    image: splunk/universalforwarder:7.3.0
+    hostname: splunkforwarder
+    environment:
+      - SPLUNK_START_ARGS=--accept-license --answer-yes
+      - SPLUNK_STANDALONE_URL=splunk:9997
+      - SPLUNK_USER=root
+      - SPLUNK_ADD=monitor /logs
+      - SPLUNK_PASSWORD=password
+    restart: always
+    depends_on:
+      - splunk
+    volumes:
+      - log_volume:/logs

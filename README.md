@@ -24,6 +24,10 @@ This microservices based project demonstrates how multiple services run independ
 
 ## Technology Stack Used
 - **RabbitMQ** as a Message Broker
+- **ElasticSearch** to store and indexes log data
+- **Logstash** to enhance the data and sends it to Elasticsearch
+- **Kibana** to visualize data stored in elasticsearch
+- **FileBeat** as data shippers to elasticsearch
 - **Feign** to create REST Clients
 - **Ribbon** to Client Side Load Balance
 - **Eureka** to a Service Discovery
@@ -33,12 +37,23 @@ This microservices based project demonstrates how multiple services run independ
 - **Postgres** as Database
 - **Splunk** as Log Analysis Platform
 - **Swagger** to create an API documentation
-- **DeadHeat Lock** as a locking mechanism to avoid concurrency issues
+
 
 ## DeadHeat Lock
 Here DeadHeat Lock library is being used which I created before. You can look into that using - [DeadHeat Lock](https://github.com/vrushofficial/deadheat-lock).
 
 Locking mechanism as a usecase in Booking service on save booking to ensure that user not allow for booking with same RoomId(which can be called from any instance of booking service simultaneously).
+
+## Run Application on Docker
+### To build the services
+```./build.sh```
+- Above shell script is containing docker compose build of each service.
+
+### To Start Environment
+```./start.sh```
+- Above shell script is containing docker compose run of each service.
+
+Tip: Run these command and go to take a coffee... or 2...   :)
 
 ## Starting services locally without Docker
 
@@ -53,8 +68,8 @@ I used a thymeleaf template from [Frontend Template - Delux by Colorlib](https:/
 
 |     Application       |     Port          |
 | ------------- | ------------- |
-| Booking Microservice | 8100 |
-| Searching Microservice | 8200 |
+| Booking Microservice | 8100 , 8101, 8102|
+| Searching Microservice | 8200 ,8201|
 | Financial Microservice | 8300 |
 | Consumer Microservice | 8400 |
 | RabbitMQ | 5672, 5673 |
@@ -66,6 +81,10 @@ I used a thymeleaf template from [Frontend Template - Delux by Colorlib](https:/
 | Netflix Eureka | 8761 |
 | Zipkin | 9411 |
 | DeadHeat Lock | 6379 |
+| Logstash | 5044 |
+| Elasticsearch  | 9200 |
+| Kibana | 5601 |
+
 
 
 # That's all. Leave a star if it helped you!

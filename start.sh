@@ -1,88 +1,53 @@
-##!/usr/bin/env bash
-#
-#BUILD=$1;
-#
-#function print_green() {
-#    echo -e "\e[32m$1\e[0m"
-#}
-#
-#function print_error() {
-#    echo -e "\e[31m[x] $1\e[0m"
-#}
-#
-#function print_blue() {
-#    echo -e "\e[34m$1\e[0m"
-#}
-#
-#print_green "███████╗███████╗████████╗██╗   ██╗██████╗ "
-#print_green "██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗"
-#print_green "███████╗█████╗     ██║   ██║   ██║██████╔╝"
-#print_green "╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝ "
-#print_green "███████║███████╗   ██║   ╚██████╔╝██║     "
-#print_green "╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝     "
-#echo
-#
-#
-#if [[ "$BUILD" = '--build' ]] ; then
-#    print_blue "Starting docker build"
-#    echo;
-#    ./build.sh
-#fi
-#
-#print_blue "Starting the Environment SetUp";
-#print_blue "- RabbitMQ Cluster";
-#print_blue "- Splunk";
-#print_blue "- Postgres";
-#print_blue "- Redis";
-#print_blue "- Zipkin";
-#print_blue "- ElasticSearch";
-#print_blue "- Kibana";
-#print_blue "- Logstash";
-#print_blue "- Filebeat";
-#
-#echo;
-#
-#print_blue "Starting RabbitMQ Cluster, Postgres, Redis, Splunk, ElasticSearch, Kibana, Logstash, Filebeat";
-#
-#docker-compose -f docker-compose-infra.yml up -d;
-#
-#print_blue "Starting the RabbitMQ Cluster creation";
-#
-#docker-compose -f docker-compose-rabbitmq.yml up -d;
-#
+#!/usr/bin/env bash
+
+BUILD=$1;
+
+function print_green() {
+    echo -e "\e[32m$1\e[0m"
+}
+
+function print_error() {
+    echo -e "\e[31m[x] $1\e[0m"
+}
+
+function print_blue() {
+    echo -e "\e[34m$1\e[0m"
+}
+
+print_green "███████╗███████╗████████╗██╗   ██╗██████╗ "
+print_green "██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗"
+print_green "███████╗█████╗     ██║   ██║   ██║██████╔╝"
+print_green "╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝ "
+print_green "███████║███████╗   ██║   ╚██████╔╝██║     "
+print_green "╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝     "
+echo
+
+
+if [[ "$BUILD" = '--build' ]] ; then
+    print_blue "Starting docker build"
+    echo;
+    ./build.sh
+fi
+
+
+docker-compose -f docker-compose-infra.yml up -d;
+
+docker-compose -f docker-compose-rabbitmq.yml up -d;
+
 #./wait.sh 10 http://localhost:15692/metrics "docker-compose-rabbitmq.yml" "rabbitmq-zipkin"
 #./wait.sh 10 http://localhost:15693/metrics "docker-compose-rabbitmq.yml" "rabbitmq-business"
-#
-#print_green "RabbitMQ Cluster is running";
-#echo;
-#
-#print_blue "Waiting Splunk setup";
-#
+
 #./wait.sh 5 http://localhost:8000
+
 #
-#print_green "Splunk is running";
-#echo;
-#
-#print_blue "Starting Zipkin and Eureka";
-#echo;
-#
-#docker-compose -f docker-compose-zipkin-eureka.yml up -d;
-#
-#print_green "Zipkin and Eureka is created";
-#echo;
-#
-#print_blue "Waiting Eureka startup";
-#
+docker-compose -f docker-compose-zipkin-eureka.yml up -d;
+
 #./wait.sh 5 http://localhost:8761/actuator/health
-#
-#print_green "Eureka is running";
-#echo;
-#
-#docker-compose -f docker-compose-backend-services.yml up -d;
-#
-#print_blue "Starting Booking Services";
-#echo;
-#
+
+
+docker-compose -f docker-compose-backend-services.yml up -d;
+
+
 #./wait.sh 5 http://localhost:8100/actuator/health
 #./wait.sh 5 http://localhost:8101/actuator/health
 #./wait.sh 5 http://localhost:8102/actuator/health
@@ -100,9 +65,9 @@
 #
 #print_green "All Backend services are running";
 #echo;
-#
-#docker-compose -f docker-compose-frontend-service.yml up -d;
-#
+
+docker-compose -f docker-compose-frontend-service.yml up -d;
+
 #print_blue "Starting Frontend Service";
 #echo;
 #
@@ -110,3 +75,5 @@
 #
 #print_green "Frontend Service is running";
 #echo;
+
+docker-compose -f docker-compose-ELK-stack.yml up -d;

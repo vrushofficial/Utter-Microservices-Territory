@@ -14,7 +14,6 @@ print_blue "╚═════╝  ╚═════╝  ╚═════╝�
 echo
 print_blue "Building Eureka";
 docker-compose -f docker-compose-zipkin-eureka.yml build;
-docker-compose-ELK-stack
 print_blue "Building Backend Services";
 docker-compose -f docker-compose-backend-services.yml build;
 print_blue "Building Frontend Service";
